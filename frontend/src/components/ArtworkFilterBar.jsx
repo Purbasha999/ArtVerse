@@ -1,3 +1,5 @@
+import styles from '../styles/artworkFilterBar.module.css';
+
 export default function ArtworkFilterBar({ controls }) {
     const {
         sortBy, setSortBy,
@@ -8,25 +10,33 @@ export default function ArtworkFilterBar({ controls }) {
     } = controls;
 
     return (
-        <div className="row g-2 align-items-end mb-3">
-            <div className="col-sm-6 col-lg-3">
-                <label className="form-label small mb-1" htmlFor="sortBy">Sort by</label>
-                <select id="sortBy" className="form-select form-select-sm" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+        <div className={`${styles.bar} mb-3`}>
+            <div className={styles.group}>
+                <span className={styles.label}><i className="bi bi-sort-down"></i> Sort by</span>
+                <select
+                    aria-label="Sort by"
+                    className={`${styles.pill} form-select form-select-sm w-auto`}
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                >
                     {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
             </div>
-            <div className="col-sm-6 col-lg-3">
-                <label className="form-label small mb-1" htmlFor="filterMedium">Medium</label>
-                <select id="filterMedium" className="form-select form-select-sm" value={medium} onChange={e => setMedium(e.target.value)}>
+
+            <div className={styles.group}>
+                <span className={styles.label}><i className="bi bi-funnel"></i> Filter</span>
+                <select
+                    aria-label="Filter by medium"
+                    className={`${styles.pill} form-select form-select-sm w-auto`}
+                    value={medium}
+                    onChange={e => setMedium(e.target.value)}
+                >
                     <option value="">All Mediums</option>
                     {mediumOptions.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-            </div>
-            <div className="col-sm-6 col-lg-3">
-                <label className="form-label small mb-1" htmlFor="filterTag">Tag</label>
                 <select
-                    id="filterTag"
-                    className="form-select form-select-sm"
+                    aria-label="Filter by tag"
+                    className={`${styles.pill} form-select form-select-sm w-auto`}
                     value={tag}
                     onChange={e => setTag(e.target.value)}
                     disabled={tagOptions.length === 0}
@@ -34,13 +44,10 @@ export default function ArtworkFilterBar({ controls }) {
                     <option value="">All Tags</option>
                     {tagOptions.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-            </div>
-            <div className="col-sm-6 col-lg-3">
-                <label className="form-label small mb-1" htmlFor="filterLocation">Location</label>
                 <input
-                    id="filterLocation"
+                    aria-label="Filter by location"
                     type="text"
-                    className="form-control form-control-sm"
+                    className={`${styles.pill} form-control form-control-sm`}
                     placeholder="City or state"
                     value={location}
                     onChange={e => setLocation(e.target.value)}

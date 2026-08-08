@@ -9,7 +9,10 @@ const parseTags = (tags) => {
 };
 
 module.exports.index = async (req, res) => {
-    const artworks = await Artwork.find({})
+    // Browsing only shows artwork by other people - a user's own listings
+    // are managed from their profile page instead.
+    const filter = req.user ? { artist: { $ne: req.user._id } } : {};
+    const artworks = await Artwork.find(filter)
         .populate('artist', 'username')
         .populate('reviews', 'rating');
     res.json({ artworks });
@@ -33,7 +36,7 @@ module.exports.create = async (req, res) => {
 module.exports.show = async (req, res) => {
     const { id } = req.params;
     const artwork = await Artwork.findById(id)
-        .populate('artist', 'username')
+        .populate('artist', 'username avatar')
         .populate({ path: 'reviews', populate: { path: 'author', select: 'username' } });
     if (!artwork) {
         return res.status(404).json({ message: 'Cannot find that artwork!' });

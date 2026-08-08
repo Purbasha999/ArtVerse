@@ -3,8 +3,10 @@ import styles from '../styles/artworkCard.module.css';
 
 export default function ArtworkCard({ artwork }) {
     const thumb = artwork.images?.[0]?.url?.replace('/upload', '/upload/c_fill,w_500,dpr_auto');
-    const reviews = artwork.reviews || [];
-    const avgRating = reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+    // A rating and its written review are independent, so not every review
+    // entry necessarily has a numeric rating - only average the ones that do.
+    const ratedReviews = (artwork.reviews || []).filter(r => typeof r.rating === 'number');
+    const avgRating = ratedReviews.length ? ratedReviews.reduce((sum, r) => sum + r.rating, 0) / ratedReviews.length : 0;
 
     return (
         <div className={`card ${styles.card}`}>
@@ -20,13 +22,13 @@ export default function ArtworkCard({ artwork }) {
             <div className="card-body">
                 <h5 className="card-title mb-1">{artwork.title}</h5>
                 <p className="card-text text-muted small mb-1">{artwork.medium} &middot; {artwork.location}</p>
-                {reviews.length > 0 ? (
+                {ratedReviews.length > 0 ? (
                     <p className="card-text small mb-1">
                         <i className="bi bi-star-fill text-warning me-1"></i>
-                        {avgRating.toFixed(1)} ({reviews.length})
+                        {avgRating.toFixed(1)} ({ratedReviews.length})
                     </p>
                 ) : (
-                    <p className="card-text small text-muted mb-1">No reviews yet</p>
+                    <p className="card-text small text-muted mb-1">No ratings yet</p>
                 )}
                 <p className="card-text fw-bold mb-1">Rs. {artwork.price}</p>
                 {artwork.createdAt && (

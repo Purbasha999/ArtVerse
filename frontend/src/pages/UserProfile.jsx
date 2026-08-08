@@ -87,7 +87,14 @@ export default function UserProfile() {
                                     </p>
                                 )}
                                 <p className="mb-1"><i className="bi bi-envelope me-2"></i><a href={`mailto:${user.email}`}>{user.email}</a></p>
-                                <p className="mb-0"><i className="bi bi-telephone me-2"></i><a href={`tel:${user.phone}`}>{user.phone}</a></p>
+                                <p className="mb-2"><i className="bi bi-telephone me-2"></i><a href={`tel:${user.phone}`}>{user.phone}</a></p>
+                                <p className="text-muted small mb-0">
+                                    <i className="bi bi-star-fill text-warning me-1"></i>
+                                    {user.ratingsGiven || 0} rating{user.ratingsGiven === 1 ? '' : 's'} given
+                                    <span className="mx-2">&middot;</span>
+                                    <i className="bi bi-chat-left-text me-1"></i>
+                                    {user.reviewsWritten || 0} review{user.reviewsWritten === 1 ? '' : 's'} written
+                                </p>
                             </div>
                             {isOwnProfile && (
                                 <button className="btn btn-outline-primary btn-sm" onClick={() => setEditing(true)}>
@@ -133,7 +140,7 @@ export default function UserProfile() {
                 </div>
             </div>
 
-            <h3 className="mb-3">Artworks by {user.username}</h3>
+            <h3 className="mb-3">Your Artworks</h3>
             {artworks.length === 0 ? (
                 <p>No artworks listed yet.</p>
             ) : (

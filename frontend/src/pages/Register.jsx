@@ -36,7 +36,7 @@ export default function Register() {
                 <div className="col-md-6 col-xl-4">
                     <div className="card shadow">
                         <img
-                            src="https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=1740&auto=format&fit=crop"
+                            src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1740&auto=format&fit=crop"
                             alt=""
                             className="card-img-top"
                             style={{ height: '180px', objectFit: 'cover' }}

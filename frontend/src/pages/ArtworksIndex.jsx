@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { listArtworks } from '../api/artworks';
 import ArtworkCard from '../components/ArtworkCard';
 import ArtworkGrid from '../components/ArtworkGrid';
@@ -6,11 +7,13 @@ import ArtworkFilterBar from '../components/ArtworkFilterBar';
 import ClusterMap from '../components/ClusterMap';
 import useArtworkFilterSort from '../hooks/useArtworkFilterSort';
 import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function ArtworksIndex() {
     const [artworks, setArtworks] = useState([]);
     const [loading, setLoading] = useState(true);
     const { showError } = useAlert();
+    const { currentUser } = useAuth();
     const filters = useArtworkFilterSort(artworks);
 
     useEffect(() => {
@@ -28,7 +31,7 @@ export default function ArtworksIndex() {
                 <h1 style={{ paddingTop: '12px' }}>Artworks</h1>
                 {loading && <p>Loading artworks...</p>}
                 {!loading && artworks.length === 0 && (
-                    <p>No artworks listed yet. Be the first to sell one!</p>
+                    <p>{currentUser ? 'No other artists have listed artwork yet.' : 'No artworks listed yet. Be the first to sell one!'}</p>
                 )}
                 {!loading && artworks.length > 0 && (
                     <>

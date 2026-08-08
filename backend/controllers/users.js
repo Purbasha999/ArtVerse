@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const Artwork = require('../models/artwork');
+const Review = require('../models/review');
 const { cloudinary } = require('../config/cloudinary');
 
 module.exports.show = async (req, res) => {
@@ -8,9 +9,11 @@ module.exports.show = async (req, res) => {
     if (!user) {
         return res.status(404).json({ message: 'Cannot find that user!' });
     }
-    const artworks = await Artwork.find({ artist: id })
-        .populate('reviews', 'rating')
-        .sort('-createdAt');
+    const [artworks, ratingsGiven, reviewsWritten] = await Promise.all([
+        Artwork.find({ artist: id }).populate('reviews', 'rating').sort('-createdAt'),
+        Review.countDocuments({ author: id, rating: { $exists: true } }),
+        Review.countDocuments({ author: id, body: { $exists: true, $ne: '' } })
+    ]);
     res.json({
         user: {
             _id: user._id,
@@ -18,7 +21,9 @@ module.exports.show = async (req, res) => {
             email: user.email,
             phone: user.phone,
             avatar: user.avatar,
-            memberSince: user.createdAt
+            memberSince: user.createdAt,
+            ratingsGiven,
+            reviewsWritten
         },
         artworks
     });

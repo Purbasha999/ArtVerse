@@ -8,11 +8,17 @@ export const SORT_OPTIONS = [
     { value: 'location', label: 'Location (A-Z)' }
 ];
 
+// A rating and its written review are independent, so not every review entry
+// necessarily carries a numeric rating - only count/average the ones that do.
+const ratedReviews = (artwork) => (artwork.reviews || []).filter(r => typeof r.rating === 'number');
+
 const avgRating = (artwork) => {
-    const reviews = artwork.reviews || [];
+    const reviews = ratedReviews(artwork);
     if (!reviews.length) return 0;
     return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
 };
+
+const ratingCount = (artwork) => ratedReviews(artwork).length;
 
 // Shared client-side sort/filter logic for the artwork grid, used on both the
 // browse-all page and a user's profile page. Default sort is "recent" (date
@@ -39,8 +45,17 @@ export default function useArtworkFilterSort(artworks) {
 
         result.sort((a, b) => {
             switch (sortBy) {
-                case 'rating':
-                    return avgRating(b) - avgRating(a);
+                case 'rating': {
+                    // Ties (most commonly two artworks with zero ratings)
+                    // fall through to rating count, then recency, so the
+                    // order is always deterministic instead of looking
+                    // shuffled/random.
+                    const byAvg = avgRating(b) - avgRating(a);
+                    if (byAvg !== 0) return byAvg;
+                    const byCount = ratingCount(b) - ratingCount(a);
+                    if (byCount !== 0) return byCount;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
                 case 'medium':
                     return (a.medium || '').localeCompare(b.medium || '');
                 case 'location':

@@ -35,7 +35,7 @@ const seedArtworks = async () => {
         return mongoose.connection.close();
     }
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
         const city = sample(cities);
         const author = sample(userIds);
         const numTags = 2 + Math.floor(Math.random() * 3);

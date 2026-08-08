@@ -27,11 +27,11 @@ export default function Navbar() {
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNavDropdown">
-                    <div className="navbar-nav">
+                    <div className="navbar-nav gap-2">
                         <NavLink className="nav-link" to="/artworks">Browse Artworks</NavLink>
-                        <NavLink className="nav-link" to="/artworks/new">Sell Your Artwork</NavLink>
+                        <NavLink className="nav-link" to="/artworks/new">List Your Artwork</NavLink>
                     </div>
-                    <div className="navbar-nav ms-auto">
+                    <div className="navbar-nav ms-auto gap-2">
                         {!currentUser ? (
                             <>
                                 <NavLink className="nav-link" to="/login">Login</NavLink>

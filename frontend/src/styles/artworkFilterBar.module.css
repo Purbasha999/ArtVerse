@@ -1,0 +1,54 @@
+.bar {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+select.pill,
+input.pill {
+    border: 1px solid #dee2e6;
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    background-color: #fff;
+    color: #212529;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select.pill:focus,
+input.pill:focus {
+    outline: none;
+    border-color: #198754;
+    box-shadow: 0 0 0 0.15rem rgba(25, 135, 84, 0.15);
+}
+
+select.pill {
+    padding-right: 1.75rem;
+}
+
+input.pill {
+    width: 150px;
+    flex-shrink: 0;
+}
