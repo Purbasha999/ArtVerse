@@ -2,9 +2,29 @@ const { artworkSchema, reviewSchema } = require('../validators/schemas');
 const ExpressError = require('../utils/ExpressError');
 const Artwork = require('../models/artwork');
 const Review = require('../models/review');
+const User = require('../models/user');
+const { COOKIE_NAME, verifyToken } = require('../utils/jwt');
+
+// Runs on every request. If a valid JWT cookie is present, loads the user it
+// identifies onto req.user; otherwise just moves on with req.user left
+// unset. Routes stay reachable either way - isLoggedIn below is what
+// actually rejects unauthenticated requests where that's required.
+module.exports.attachUser = async (req, res, next) => {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) return next();
+    try {
+        const payload = verifyToken(token);
+        const user = await User.findById(payload.id);
+        if (user) req.user = user;
+    } catch (e) {
+        // Invalid/expired token - treat the request as unauthenticated
+        // rather than erroring it out.
+    }
+    next();
+};
 
 module.exports.isLoggedIn = (req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
         return res.status(401).json({ message: 'You must be signed in first!' });
     }
     next();

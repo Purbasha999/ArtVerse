@@ -2,8 +2,7 @@ if (process.env.NODE_ENV !== 'production') { require('dotenv').config({ quiet: t
 
 const express = require('express');
 const app = express();
-const session = require('express-session');
-const { MongoStore } = require('connect-mongo');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
@@ -13,13 +12,13 @@ const expressMongoSanitize = require('@exortek/express-mongo-sanitize');
 const ExpressError = require('./utils/ExpressError');
 const connectDB = require('./config/db');
 const User = require('./models/user');
+const { attachUser } = require('./middleware');
 
 const authRoutes = require('./routes/auth');
 const artworkRoutes = require('./routes/artworks');
 const reviewRoutes = require('./routes/reviews');
 const userRoutes = require('./routes/users');
 
-const dbUrl = process.env.DB_URL;
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -35,41 +34,18 @@ app.use(cors({
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(expressMongoSanitize());
 app.use(helmet({
     contentSecurityPolicy: false // this server only serves JSON; the React app owns its own CSP concerns
 }));
 
-const store = MongoStore.create({
-    mongoUrl: dbUrl,
-    touchAfter: 24 * 60 * 60,
-    crypto: {
-        secret: process.env.SESSION_SECRET
-    }
-});
-store.on('error', function (e) {
-    console.log('SESSION STORE ERROR', e);
-});
-
-app.use(session({
-    store,
-    name: 'artverse.session',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: 1000 * 60 * 60 * 24 * 7
-    }
-}));
-
+// Stateless auth: no session store. passport-local-mongoose still checks
+// username/password on login; attachUser reads the JWT cookie on every
+// request afterwards and loads req.user from it (see utils/jwt.js).
 app.use(passport.initialize());
-app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+app.use(attachUser);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/artworks', artworkRoutes);

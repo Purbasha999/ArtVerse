@@ -1,5 +1,6 @@
 const passport = require('passport');
 const User = require('../models/user');
+const { signToken, setTokenCookie, clearTokenCookie } = require('../utils/jwt');
 
 const publicUser = (user) => ({ _id: user._id, username: user.username, email: user.email, phone: user.phone, avatar: user.avatar });
 
@@ -14,12 +15,10 @@ module.exports.register = async (req, res) => {
         }
         const user = new User({ username, email, phone });
         const registeredUser = await User.register(user, password);
-        req.login(registeredUser, err => {
-            if (err) return res.status(500).json({ message: 'Registered but could not log you in automatically.' });
-            res.status(201).json({
-                user: publicUser(registeredUser),
-                message: `Welcome ${registeredUser.username}, to ArtVerse!`
-            });
+        setTokenCookie(res, signToken(registeredUser));
+        res.status(201).json({
+            user: publicUser(registeredUser),
+            message: `Welcome ${registeredUser.username}, to ArtVerse!`
         });
     } catch (e) {
         res.status(400).json({ message: e.message });
@@ -27,23 +26,21 @@ module.exports.register = async (req, res) => {
 };
 
 module.exports.login = (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
+    // session: false - passport-local still verifies the username/password
+    // via passport-local-mongoose, it just doesn't establish a session.
+    passport.authenticate('local', { session: false }, (err, user, info) => {
         if (err) return next(err);
         if (!user) {
             return res.status(401).json({ message: info?.message || 'Invalid username or password.' });
         }
-        req.login(user, err => {
-            if (err) return next(err);
-            res.json({ user: publicUser(user), message: `Welcome back ${user.username}!` });
-        });
+        setTokenCookie(res, signToken(user));
+        res.json({ user: publicUser(user), message: `Welcome back ${user.username}!` });
     })(req, res, next);
 };
 
-module.exports.logout = (req, res, next) => {
-    req.logout(err => {
-        if (err) return next(err);
-        res.json({ message: 'Successfully logged out!' });
-    });
+module.exports.logout = (req, res) => {
+    clearTokenCookie(res);
+    res.json({ message: 'Successfully logged out!' });
 };
 
 module.exports.me = (req, res) => {

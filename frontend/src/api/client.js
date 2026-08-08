@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
-    withCredentials: true // send/receive the ArtVerse session cookie
+    withCredentials: true // send/receive the ArtVerse JWT auth cookie
 });
 
 // Normalize error messages so callers can just read err.message
