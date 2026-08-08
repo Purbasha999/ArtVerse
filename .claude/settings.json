@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Read(//e/My_Programming/Coding/**)",
+      "Bash(cd \"e:\\\\My_Programming\\\\Coding\\\\ArtVerse\" && echo \"--- backend/.env ---\" && sed 's/=.*/=<set>/' backend/.env && echo \"--- frontend/.env ---\" && cat frontend/.env)",
+      "Bash(awk -F'=' '/^DB_URL/{print \"DB_URL=\" \\(index\\($0,\"<user>\"\\) || index\\($0,\"<db_username>\"\\) ? \"[has-placeholder]\" : \"[looks-filled]\"\\)}' backend/.env)"
+    ],
+    "additionalDirectories": [
+      "e:\\My_Programming\\Coding\\ArtVerse\\backend"
+    ]
+  }
+}

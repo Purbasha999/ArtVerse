@@ -1,0 +1,23 @@
+/* Sticky footer: #root stretches to the viewport height so a short page's
+   footer still sits at the bottom instead of trailing right after the
+   content. Layout's <main> takes the flex-grow-1 utility class to fill the
+   remaining space and push the footer down. */
+#root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+#cluster-map {
+    width: 100%;
+    height: 350px;
+}
+
+#map {
+    width: 100%;
+    height: 250px;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}
