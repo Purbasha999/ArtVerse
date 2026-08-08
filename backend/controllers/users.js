@@ -5,7 +5,7 @@ const { cloudinary } = require('../config/cloudinary');
 
 module.exports.show = async (req, res) => {
     const { id } = req.params;
-    const user = await User.findById(id, 'username email phone avatar createdAt');
+    const user = await User.findById(id, 'username email phone avatar createdAt followers following');
     if (!user) {
         return res.status(404).json({ message: 'Cannot find that user!' });
     }
@@ -14,6 +14,7 @@ module.exports.show = async (req, res) => {
         Review.countDocuments({ author: id, rating: { $exists: true } }),
         Review.countDocuments({ author: id, body: { $exists: true, $ne: '' } })
     ]);
+    const isFollowing = Boolean(req.user) && user.followers.some(f => f.equals(req.user._id));
     res.json({
         user: {
             _id: user._id,
@@ -23,10 +24,51 @@ module.exports.show = async (req, res) => {
             avatar: user.avatar,
             memberSince: user.createdAt,
             ratingsGiven,
-            reviewsWritten
+            reviewsWritten,
+            artworkCount: artworks.length,
+            followersCount: user.followers.length,
+            followingCount: user.following.length,
+            isFollowing
         },
         artworks
     });
+};
+
+module.exports.follow = async (req, res) => {
+    const { id } = req.params;
+    if (id === String(req.user._id)) {
+        return res.status(400).json({ message: 'You cannot follow yourself!' });
+    }
+    const target = await User.findById(id);
+    if (!target) return res.status(404).json({ message: 'Cannot find that user!' });
+
+    await User.findByIdAndUpdate(id, { $addToSet: { followers: req.user._id } });
+    await User.findByIdAndUpdate(req.user._id, { $addToSet: { following: id } });
+    res.json({ message: `You are now following ${target.username}.` });
+};
+
+module.exports.unfollow = async (req, res) => {
+    const { id } = req.params;
+    const target = await User.findById(id);
+    if (!target) return res.status(404).json({ message: 'Cannot find that user!' });
+
+    await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+    await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+    res.json({ message: `Unfollowed ${target.username}.` });
+};
+
+module.exports.followers = async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id).populate('followers', 'username avatar');
+    if (!user) return res.status(404).json({ message: 'Cannot find that user!' });
+    res.json({ users: user.followers });
+};
+
+module.exports.following = async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id).populate('following', 'username avatar');
+    if (!user) return res.status(404).json({ message: 'Cannot find that user!' });
+    res.json({ users: user.following });
 };
 
 module.exports.update = async (req, res) => {

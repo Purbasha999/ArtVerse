@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getUserProfile, updateUserProfile } from '../api/users';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { getUserProfile, updateUserProfile, followUser, unfollowUser, getFollowers, getFollowing } from '../api/users';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import ProfileAvatar from '../components/ProfileAvatar';
 import ArtworkCard from '../components/ArtworkCard';
 import ArtworkGrid from '../components/ArtworkGrid';
 import ArtworkFilterBar from '../components/ArtworkFilterBar';
+import Modal from '../components/Modal';
 import useArtworkFilterSort from '../hooks/useArtworkFilterSort';
 
 export default function UserProfile() {
@@ -22,6 +23,10 @@ export default function UserProfile() {
     const [form, setForm] = useState({ username: '', email: '', phone: '' });
     const [avatarFile, setAvatarFile] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [followBusy, setFollowBusy] = useState(false);
+    const [followModal, setFollowModal] = useState(null); // 'followers' | 'following' | null
+    const [followList, setFollowList] = useState([]);
+    const [followListLoading, setFollowListLoading] = useState(false);
 
     const isOwnProfile = currentUser && currentUser._id === id;
     const filters = useArtworkFilterSort(artworks);
@@ -58,15 +63,51 @@ export default function UserProfile() {
 
             const result = await updateUserProfile(id, formData);
             showSuccess(result.message);
-            setUser(result.user);
+            // Merge rather than replace - the update endpoint only returns
+            // the editable fields, not follow/rating counts.
+            setUser(prev => ({ ...prev, ...result.user }));
             setAvatarFile(null);
             setEditing(false);
-            if (isOwnProfile) updateCurrentUser(result.user);
+            if (isOwnProfile) updateCurrentUser(prev => ({ ...prev, ...result.user }));
         } catch (err) {
             showError(err.message);
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleToggleFollow = async () => {
+        setFollowBusy(true);
+        try {
+            const { message } = user.isFollowing ? await unfollowUser(id) : await followUser(id);
+            showSuccess(message);
+            load();
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            setFollowBusy(false);
+        }
+    };
+
+    const handleUnfollowFromList = async (targetId) => {
+        try {
+            const { message } = await unfollowUser(targetId);
+            showSuccess(message);
+            setFollowList(prev => prev.filter(u => u._id !== targetId));
+            load();
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    const openFollowModal = (type) => {
+        setFollowModal(type);
+        setFollowListLoading(true);
+        const fetcher = type === 'followers' ? getFollowers : getFollowing;
+        fetcher(id)
+            .then(setFollowList)
+            .catch(err => showError(err.message))
+            .finally(() => setFollowListLoading(false));
     };
 
     if (loading) return <p>Loading...</p>;
@@ -96,9 +137,40 @@ export default function UserProfile() {
                                     {user.reviewsWritten || 0} review{user.reviewsWritten === 1 ? '' : 's'} written
                                 </p>
                             </div>
-                            {isOwnProfile && (
+                            <div className="d-flex gap-4 text-center">
+                                <div>
+                                    <div className="fw-bold fs-5">{user.artworkCount ?? artworks.length}</div>
+                                    <div className="text-muted small">Artworks</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn btn-link p-0 text-decoration-none text-reset"
+                                    onClick={() => openFollowModal('followers')}
+                                >
+                                    <div className="fw-bold fs-5">{user.followersCount || 0}</div>
+                                    <div className="text-muted small">Followers</div>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-link p-0 text-decoration-none text-reset"
+                                    onClick={() => openFollowModal('following')}
+                                >
+                                    <div className="fw-bold fs-5">{user.followingCount || 0}</div>
+                                    <div className="text-muted small">Following</div>
+                                </button>
+                            </div>
+                            {isOwnProfile ? (
                                 <button className="btn btn-outline-primary btn-sm" onClick={() => setEditing(true)}>
                                     <i className="bi bi-pencil me-1"></i> Edit Profile
+                                </button>
+                            ) : currentUser && (
+                                <button
+                                    className={`btn btn-sm ${user.isFollowing ? 'btn-outline-danger' : 'btn-primary'}`}
+                                    onClick={handleToggleFollow}
+                                    disabled={followBusy}
+                                >
+                                    <i className={`bi ${user.isFollowing ? 'bi-person-dash-fill' : 'bi-person-plus'} me-1`}></i>
+                                    {user.isFollowing ? 'Unfollow' : 'Follow'}
                                 </button>
                             )}
                         </div>
@@ -156,6 +228,42 @@ export default function UserProfile() {
                         </ArtworkGrid>
                     )}
                 </>
+            )}
+
+            {followModal && (
+                <Modal title={followModal === 'followers' ? 'Followers' : 'Following'} onClose={() => setFollowModal(null)}>
+                    {followListLoading ? (
+                        <p className="mb-0">Loading...</p>
+                    ) : followList.length === 0 ? (
+                        <p className="mb-0 text-muted">
+                            {followModal === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+                        </p>
+                    ) : (
+                        <div className="d-flex flex-column gap-3">
+                            {followList.map(u => (
+                                <div key={u._id} className="d-flex align-items-center justify-content-between gap-2">
+                                    <Link
+                                        to={`/users/${u._id}`}
+                                        className="d-flex align-items-center gap-2 text-decoration-none text-reset"
+                                        onClick={() => setFollowModal(null)}
+                                    >
+                                        <ProfileAvatar avatar={u.avatar} size={40} />
+                                        <span>{u.username}</span>
+                                    </Link>
+                                    {followModal === 'following' && isOwnProfile && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger flex-shrink-0"
+                                            onClick={() => handleUnfollowFromList(u._id)}
+                                        >
+                                            Unfollow
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </Modal>
             )}
         </div>
     );

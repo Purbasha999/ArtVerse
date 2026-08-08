@@ -8,7 +8,9 @@ const userSchema = new Schema({
     avatar: {
         url: String,
         filename: String
-    }
+    },
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    following: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 
 userSchema.plugin(passportLocalMongoose.default);
