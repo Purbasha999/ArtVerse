@@ -117,28 +117,28 @@ npm run seed
 
 ## API reference
 
-All routes are prefixed with `/api`. Routes marked 🔒 require a valid JWT cookie (i.e. you're logged in).
+All routes are prefixed with `/api`. "Auth required" means you need a valid JWT cookie (i.e. you're logged in).
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/auth/register` | Create an account (`username`, `email`, `phone`, `password`, `confirmPassword`) |
-| POST | `/auth/login` | Log in (`username`, `password`) |
-| POST | `/auth/logout` | Log out |
-| GET | `/auth/me` | Currently logged-in user (from the JWT cookie), or `null` |
-| GET | `/artworks` | List artwork (excludes the logged-in user's own listings) |
-| POST 🔒 | `/artworks` | Create an artwork listing (multipart, up to 8 images) |
-| GET | `/artworks/:id` | Artwork detail, with populated reviews |
-| PUT 🔒 | `/artworks/:id` | Update an artwork (author only) |
-| DELETE 🔒 | `/artworks/:id` | Delete an artwork (author only) |
-| POST 🔒 | `/artworks/:id/reviews` | Rate and/or review an artwork (upserts your existing entry; blocked on your own artwork) |
-| DELETE 🔒 | `/artworks/:id/reviews/:reviewId` | Delete a review (author only) |
-| GET | `/users/:id` | Profile: contact info, rating/review counts, follow counts, artwork list |
-| PUT 🔒 | `/users/:id` | Update your own profile (name/email/phone/avatar) - self only |
-| POST 🔒 | `/users/:id/follow` | Follow a user |
-| DELETE 🔒 | `/users/:id/follow` | Unfollow a user |
-| GET | `/users/:id/followers` | List of followers (username + avatar) |
-| GET | `/users/:id/following` | List of users being followed |
-| GET | `/health` | Health check |
+| Method | Path | Auth required | Description |
+|---|---|---|---|
+| POST | `/auth/register` | No | Create an account (`username`, `email`, `phone`, `password`, `confirmPassword`) |
+| POST | `/auth/login` | No | Log in (`username`, `password`) |
+| POST | `/auth/logout` | No | Log out |
+| GET | `/auth/me` | No | Currently logged-in user (from the JWT cookie), or `null` |
+| GET | `/artworks` | No | List artwork (excludes the logged-in user's own listings) |
+| POST | `/artworks` | Yes | Create an artwork listing (multipart, up to 8 images) |
+| GET | `/artworks/:id` | No | Artwork detail, with populated reviews |
+| PUT | `/artworks/:id` | Yes | Update an artwork (author only) |
+| DELETE | `/artworks/:id` | Yes | Delete an artwork (author only) |
+| POST | `/artworks/:id/reviews` | Yes | Rate and/or review an artwork (upserts your existing entry; blocked on your own artwork) |
+| DELETE | `/artworks/:id/reviews/:reviewId` | Yes | Delete a review (author only) |
+| GET | `/users/:id` | No | Profile: contact info, rating/review counts, follow counts, artwork list |
+| PUT | `/users/:id` | Yes | Update your own profile (name/email/phone/avatar) - self only |
+| POST | `/users/:id/follow` | Yes | Follow a user |
+| DELETE | `/users/:id/follow` | Yes | Unfollow a user |
+| GET | `/users/:id/followers` | No | List of followers (username + avatar) |
+| GET | `/users/:id/following` | No | List of users being followed |
+| GET | `/health` | No | Health check |
 
 ## Data models
 
@@ -146,10 +146,18 @@ All routes are prefixed with `/api`. Routes marked 🔒 require a valid JWT cook
 - **Artwork** — `title`, `images[]`, `price`, `description`, `medium` (enum, see `backend/utils/constants.js`), `tags[]`, `location`, `geometry` (GeoJSON Point), `artist` (ref User), `reviews[]` (ref Review).
 - **Review** — `body` (optional), `rating` 1-5 (optional - either can exist alone), `author` (ref User), `artwork` (ref Artwork). One document per (author, artwork) pair.
 
+## Test login
+
+For a quick look without registering:
+
+```
+Username: user1
+Password: user1
+```
+
 ## Deployment
 
-The two services are independent and should be deployed separately:
-- **Backend**: deploy `backend/` to a Node host (Render, Railway, Fly.io, etc.). Set the backend env vars there, and set `CLIENT_URL` to your deployed frontend's origin (needed for CORS + cookies).
-- **Frontend**: `npm run build:frontend` produces a static build in `frontend/dist` - deploy that to any static host (Netlify, Cloudflare Pages, etc.). Set `VITE_API_URL` to your deployed backend's `/api` URL.
+Deployed as two separate services:
 
-Because the frontend and backend live on different origins in production, the JWT cookie is issued with `SameSite=None; Secure` there (see `backend/utils/jwt.js`) - both origins must be served over HTTPS.
+- **Frontend (Vercel)**: https://art-verse-five.vercel.app
+- **Backend (Render)**: https://artverse-t3hz.onrender.com
